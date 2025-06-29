@@ -1,5 +1,7 @@
 // main.dart
 import 'package:flutter/material.dart';
+import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(
@@ -22,7 +24,9 @@ class RoleSelectScreen extends StatelessWidget {
             ElevatedButton.icon(
               icon: Icon(Icons.lock),
               label: Text('親として使う'),
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('role', 'parent');
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => ParentMainScreen()),
@@ -33,7 +37,9 @@ class RoleSelectScreen extends StatelessWidget {
             ElevatedButton.icon(
               icon: Icon(Icons.child_care),
               label: Text('子どもとして使う'),
-              onPressed: () {
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setString('role', 'child');
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (_) => ChildMainScreen()),
@@ -62,10 +68,23 @@ class _ParentMainScreenState extends State<ParentMainScreen> {
     SettingPage(),
   ];
 
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('role');
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => RoleSelectScreen()),
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('うちマネ（保護者）')),
+      appBar: AppBar(
+        title: Text('うちマネ（保護者）'),
+        actions: [IconButton(icon: Icon(Icons.logout), onPressed: _logout)],
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -96,10 +115,23 @@ class _ChildMainScreenState extends State<ChildMainScreen> {
     HistoryPage(),
   ];
 
+  void _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('role');
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => RoleSelectScreen()),
+      (_) => false,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('うちマネ（こども）')),
+      appBar: AppBar(
+        title: Text('うちマネ（こども）'),
+        actions: [IconButton(icon: Icon(Icons.logout), onPressed: _logout)],
+      ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
@@ -140,10 +172,48 @@ class SettingPage extends StatelessWidget {
   }
 }
 
-class ChildHomePage extends StatelessWidget {
+class ChildHomePage extends StatefulWidget {
+  @override
+  _ChildHomePageState createState() => _ChildHomePageState();
+}
+
+class _ChildHomePageState extends State<ChildHomePage> {
+  final List<String> mascotImages = [
+    'assets/images/mascot_1.png',
+    'assets/images/mascot_2.png',
+    'assets/images/mascot_3.png',
+  ];
+
+  late String mascotImagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    mascotImagePath = mascotImages[Random().nextInt(mascotImages.length)];
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('子ども用ホーム'));
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(mascotImagePath, width: 120),
+          SizedBox(height: 10),
+          Text('こんにちは！ポイントをチェックしよう！', style: TextStyle(fontSize: 18)),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                mascotImagePath =
+                    mascotImages[Random().nextInt(mascotImages.length)];
+              });
+            },
+            child: Text('マスコット変更'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
