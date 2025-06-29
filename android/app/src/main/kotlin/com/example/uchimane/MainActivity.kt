@@ -1,4 +1,4 @@
-package com.example.home_money_app
+package com.example.uchimane
 
 import io.flutter.embedding.android.FlutterActivity
 

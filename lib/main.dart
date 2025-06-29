@@ -1,133 +1,162 @@
+// main.dart
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(HomeMoneyApp());
+  runApp(
+    MaterialApp(
+      home: RoleSelectScreen(),
+      theme: ThemeData(primarySwatch: Colors.teal),
+    ),
+  );
 }
 
-class HomeMoneyApp extends StatelessWidget {
+class RoleSelectScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'うちマネ',
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: HomePage(),
+    return Scaffold(
+      appBar: AppBar(title: Text('うちマネ ロール選択')),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton.icon(
+              icon: Icon(Icons.lock),
+              label: Text('親として使う'),
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => ParentMainScreen()),
+                );
+              },
+            ),
+            SizedBox(height: 20),
+            ElevatedButton.icon(
+              icon: Icon(Icons.child_care),
+              label: Text('子どもとして使う'),
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (_) => ChildMainScreen()),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-class HomePage extends StatefulWidget {
+// Parent Main Screen
+class ParentMainScreen extends StatefulWidget {
   @override
-  State<HomePage> createState() => _HomePageState();
+  _ParentMainScreenState createState() => _ParentMainScreenState();
 }
 
-class _HomePageState extends State<HomePage> {
-  int balance = 100;
+class _ParentMainScreenState extends State<ParentMainScreen> {
+  int _selectedIndex = 0;
 
-  void addPoint() {
-    setState(() {
-      balance += 10;
-    });
-    updatePhrase();
-  }
-
-  void usePoint() {
-    setState(() {
-      if (balance >= 10) balance -= 10;
-    });
-    updatePhrase();
-  }
-
-  final List<String> phrases = [
-    'こんにちは！おこづかいをためようね！',
-    'がんばったね！ポイントげっと！',
-    'つぎはなにをかおうかな？',
-    'いいね！いっぱいためてね！',
-    'やったー！ぼくもうれしい！',
+  final List<Widget> _pages = [
+    ParentHomePage(),
+    GivePointPage(),
+    SettingPage(),
   ];
-
-  String currentPhrase = '';
-  void updatePhrase() {
-    setState(() {
-      phrases.shuffle();
-      currentPhrase = phrases.first;
-    });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    updatePhrase(); // 初期セリフ
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('うちマネ')),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start, // ←ココ重要
-            children: [
-              Column(
-                children: [
-                  Image.asset('assets/images/mascot.png', width: 120),
-                  SizedBox(height: 10),
-                  Text(
-                    currentPhrase,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              Text('ざんだか：$balance ポイント', style: TextStyle(fontSize: 24)),
-              SizedBox(height: 30),
-
-              SizedBox(height: 30),
-
-              ElevatedButton.icon(
-                onPressed: addPoint,
-                icon: Image.asset(
-                  'assets/images/gift.png',
-                  width: 40,
-                  height: 40,
-                ),
-                label: Text('ポイントをもらう'),
-              ),
-              SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: usePoint,
-                icon: Image.asset(
-                  'assets/images/cart.png',
-                  width: 40,
-                  height: 40,
-                ),
-                label: Text('ポイントをつかう'),
-              ),
-              SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('履歴はまだ未実装です')));
-                },
-                icon: Image.asset(
-                  'assets/images/receipt.png',
-                  width: 40,
-                  height: 40,
-                ),
-                label: Text('履歴を見る'),
-              ),
-            ],
-          ),
-        ),
+      appBar: AppBar(title: Text('うちマネ（保護者）')),
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.teal,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
+          BottomNavigationBarItem(icon: Icon(Icons.card_giftcard), label: '渡す'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: '設定'),
+        ],
       ),
     );
+  }
+}
+
+// Child Main Screen
+class ChildMainScreen extends StatefulWidget {
+  @override
+  _ChildMainScreenState createState() => _ChildMainScreenState();
+}
+
+class _ChildMainScreenState extends State<ChildMainScreen> {
+  int _selectedIndex = 0;
+
+  final List<Widget> _pages = [
+    ChildHomePage(),
+    SpendPointPage(),
+    HistoryPage(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('うちマネ（こども）')),
+      body: _pages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        selectedItemColor: Colors.teal,
+        onTap: (index) => setState(() => _selectedIndex = index),
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'つかう',
+          ),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'れきし'),
+        ],
+      ),
+    );
+  }
+}
+
+// 各ページ（ダミー）
+class ParentHomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('保護者用ホーム'));
+  }
+}
+
+class GivePointPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('ポイントを渡す画面'));
+  }
+}
+
+class SettingPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('設定画面'));
+  }
+}
+
+class ChildHomePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('子ども用ホーム'));
+  }
+}
+
+class SpendPointPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('ポイントをつかう画面'));
+  }
+}
+
+class HistoryPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(child: Text('履歴画面'));
   }
 }
