@@ -155,6 +155,7 @@ class _ChildMainScreenState extends State<ChildMainScreen> {
 
   final List<Widget> _pages = [
     ChildHomePage(),
+    EarnPointPage(),
     SpendPointPage(),
     HistoryPage(),
   ];
@@ -178,11 +179,13 @@ class _ChildMainScreenState extends State<ChildMainScreen> {
       ),
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, //4タブ化の際に追加
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.teal,
         onTap: (index) => setState(() => _selectedIndex = index),
         items: [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'ホーム'),
+          BottomNavigationBarItem(icon: Icon(Icons.task), label: 'ためる'), // 追加
           BottomNavigationBarItem(
             icon: Icon(Icons.shopping_cart),
             label: 'つかう',
@@ -257,6 +260,55 @@ class _ChildHomePageState extends State<ChildHomePage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class EarnPointPage extends StatelessWidget {
+  final Map<String, List<Map<String, dynamic>>> categories = {
+    'お手伝い': [
+      {'name': 'お皿洗い', 'icon': Icons.local_dining},
+      {'name': 'お風呂掃除', 'icon': Icons.bathtub},
+    ],
+    '勉強': [
+      {'name': '読書', 'icon': Icons.menu_book},
+      {'name': '計算練習', 'icon': Icons.calculate},
+    ],
+  };
+
+  void _submitTask(BuildContext context, String taskName) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('「$taskName」を申請しました'),
+        backgroundColor: Colors.teal,
+        duration: Duration(seconds: 2),
+      ),
+    );
+    // 今後ここでDB登録や親への通知処理を追加予定
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.all(12),
+      children: categories.entries.map((entry) {
+        return ExpansionTile(
+          title: Text(entry.key, style: TextStyle(fontWeight: FontWeight.bold)),
+          children: entry.value.map((task) {
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: ListTile(
+                leading: Icon(task['icon'], size: 40, color: Colors.teal),
+                title: Text(task['name'], style: TextStyle(fontSize: 18)),
+                trailing: ElevatedButton(
+                  onPressed: () => _submitTask(context, task['name']),
+                  child: Text('しんせい'),
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      }).toList(),
     );
   }
 }
