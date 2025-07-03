@@ -232,6 +232,8 @@ class _ChildHomePageState extends State<ChildHomePage> {
   ];
 
   late String mascotImagePath;
+  int currentPoint = 120; // 仮の所持ポイント
+  int nextGoalPoint = 200; // 目標ポイント（例）
 
   @override
   void initState() {
@@ -241,10 +243,37 @@ class _ChildHomePageState extends State<ChildHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    double progress = currentPoint / nextGoalPoint;
+    int remain = (nextGoalPoint - currentPoint).clamp(0, nextGoalPoint);
+
+    return SingleChildScrollView(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          SizedBox(height: 16),
+          Text(
+            'いまのポイント',
+            style: TextStyle(fontSize: 20, color: Colors.grey[700]),
+          ),
+          Text(
+            '$currentPoint pt',
+            style: TextStyle(
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: Colors.teal,
+            ),
+          ),
+          SizedBox(height: 20),
+          Text('次の目標まで あと $remain pt'),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8),
+            child: LinearProgressIndicator(
+              value: progress > 1 ? 1 : progress,
+              backgroundColor: Colors.grey[300],
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+            ),
+          ),
+          SizedBox(height: 20),
           Image.asset(mascotImagePath, width: 120),
           SizedBox(height: 10),
           Text('こんにちは！ポイントをチェックしよう！', style: TextStyle(fontSize: 18)),
@@ -258,6 +287,7 @@ class _ChildHomePageState extends State<ChildHomePage> {
             },
             child: Text('マスコット変更'),
           ),
+          SizedBox(height: 20),
         ],
       ),
     );
@@ -268,18 +298,26 @@ class EarnPointPage extends StatelessWidget {
   final Map<String, List<Map<String, dynamic>>> categories = {
     'お手伝い': [
       {'name': 'お皿洗い', 'icon': Icons.local_dining},
+      {'name': '料理', 'icon': Icons.food_bank},
       {'name': 'お風呂掃除', 'icon': Icons.bathtub},
+      {'name': 'おつかい', 'icon': Icons.shopping_bag},
     ],
     '勉強': [
       {'name': '読書', 'icon': Icons.menu_book},
       {'name': '計算練習', 'icon': Icons.calculate},
+      {'name': '英語練習', 'icon': Icons.language},
+      {'name': 'プログラミング', 'icon': Icons.laptop},
+    ],
+    'その他': [
+      {'name': '早起き', 'icon': Icons.sunny},
+      {'name': '早寝', 'icon': Icons.bedtime},
     ],
   };
 
   void _submitTask(BuildContext context, String taskName) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('「$taskName」を申請しました'),
+        content: Text('「$taskName」をしんせいしました'),
         backgroundColor: Colors.teal,
         duration: Duration(seconds: 2),
       ),
@@ -293,7 +331,11 @@ class EarnPointPage extends StatelessWidget {
       padding: EdgeInsets.all(12),
       children: categories.entries.map((entry) {
         return ExpansionTile(
-          title: Text(entry.key, style: TextStyle(fontWeight: FontWeight.bold)),
+          leading: Icon(_getCategoryIcon(entry.key), color: Colors.teal),
+          title: Text(
+            entry.key,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
           children: entry.value.map((task) {
             return Card(
               margin: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -313,16 +355,94 @@ class EarnPointPage extends StatelessWidget {
   }
 }
 
+IconData _getCategoryIcon(String category) {
+  switch (category) {
+    case 'お手伝い':
+      return Icons.cleaning_services;
+    case '勉強':
+      return Icons.school;
+    default:
+      return Icons.category;
+  }
+}
+
 class SpendPointPage extends StatelessWidget {
+  final int currentPoints = 150; // 仮値、DBやshared_preferencesで取得する予定
+  final String goalName = 'Switch Lite';
+  final int goalPoints = 500;
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('ポイントをつかう画面'));
+    final int remainingPoints = goalPoints - currentPoints;
+    final double progress = currentPoints / goalPoints;
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '🎯 目標：$goalName（${goalPoints}ポイント）',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress.clamp(0.0, 1.0),
+            minHeight: 10,
+            backgroundColor: Colors.grey[300],
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.teal),
+          ),
+          SizedBox(height: 8),
+          Text(
+            remainingPoints > 0 ? 'あと $remainingPoints ポイントで達成！' : '🎉 達成しました！',
+            style: TextStyle(fontSize: 16),
+          ),
+          SizedBox(height: 24),
+          Expanded(child: Center(child: Text('ここに使えるアイテム一覧などを表示'))),
+        ],
+      ),
+    );
   }
 }
 
 class HistoryPage extends StatelessWidget {
+  final List<Map<String, dynamic>> history = [
+    {'date': '2025-06-29', 'type': 'earn', 'detail': 'お皿洗い', 'amount': 50},
+    {
+      'date': '2025-06-29',
+      'type': 'spend',
+      'detail': '30分ゲーム時間',
+      'amount': -100,
+    },
+    {'date': '2025-06-28', 'type': 'earn', 'detail': '計算練習', 'amount': 30},
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('履歴画面'));
+    return ListView(
+      padding: EdgeInsets.all(12),
+      children: history.map((item) {
+        final isEarn = item['type'] == 'earn';
+        return Card(
+          child: ListTile(
+            leading: Icon(
+              isEarn ? Icons.add_circle : Icons.remove_circle,
+              color: isEarn ? Colors.green : Colors.red,
+              size: 32,
+            ),
+            title: Text(item['detail']),
+            subtitle: Text(item['date']),
+            trailing: Text(
+              '${isEarn ? '+' : ''}${item['amount']}pt',
+              style: TextStyle(
+                color: isEarn ? Colors.green : Colors.red,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 }
